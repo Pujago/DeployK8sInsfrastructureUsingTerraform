@@ -1,0 +1,76 @@
+# Trigger enables DevOps pipeline to run when a commit is done on Master branch of the repo
+trigger:
+- master
+
+variables:
+  tag: '$(Build.BuildId)'
+
+# The VM that is going to run the code and deploy the infrastructure
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: Terraforming
+  displayName: Terraforming on Azure
+  jobs:
+    - job: Terraforming
+      displayName: Terraforming on Azure
+      continueOnError: false
+      steps:        
+      
+      # This is to download the pub file to access the VM
+      - task: DownloadSecureFile@1
+        name: publickey
+        inputs:
+          secureFile: 'azure_rsa.pub'
+
+      # This is to fetch key vault secrets
+      - task: AzureKeyVault@1  
+        displayName: Fetch Key Vault Secrets    
+        inputs:
+          azureSubscription: 'azure-service-connection'
+          KeyVaultName: 'keyvault-tstate25982'
+          SecretsFilter: '*'
+          RunAsPreJob: true
+      
+      # Terraform Initialisation
+      - task: TerraformCLI@0
+        displayName: Terraform Init
+        inputs:
+          command: 'init'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/kubernetes'
+          backendType: 'azurerm'
+          backendServiceArm: 'azure-service-connection'
+          ensureBackend: true
+          backendAzureRmResourceGroupName: 'tstate'
+          backendAzureRmResourceGroupLocation: 'australiaeast'
+          backendAzureRmStorageAccountName: 'tstate13433'
+          backendAzureRmContainerName: 'tstate'
+          backendAzureRmKey: 'terraform.tfstate'
+
+      # Terraform Plan
+      - task: TerraformCLI@0
+        displayName: Terraform Plan
+        inputs:
+          command: 'plan'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/kubernetes'
+          environmentServiceName: 'azure-service-connection'
+          commandOptions: '-var "client_id=$(client-id)" -var "client_secret=$(client-secret)" -var "subscription_id=$(subscription-id)"  -var "tenant_id=$(tenant-id)" -var "ssh_public_key=$(publickey.secureFilePath)"'
+
+      # Terraform Validate and Apply
+      - task: TerraformTaskV1@0
+        displayName: Terraform Apply
+        inputs:
+          provider: 'azurerm'
+          command: 'apply'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/kubernetes'
+          commandOptions: '-var "client_id=$(client-id)" -var "client_secret=$(client-secret)" -var "subscription_id=$(subscription-id)"  -var "tenant_id=$(tenant-id)" -var "ssh_public_key=$(publickey.secureFilePath)"'
+          environmentServiceNameAzureRM: 'azure-service-connection'
+
+      # - task: TerraformCLI@0
+      #   displayName: Terraform Destroy
+      #   inputs:
+      #     command: 'destroy'
+      #     workingDirectory: '$(System.DefaultWorkingDirectory)/kubernetes'
+      #     environmentServiceName: 'azure-service-connection'
+      #     commandOptions: '-var "client_id=$(client-id)" -var "client_secret=$(client-secret)" -var "subscription-id=$(subscription-id)"  -var "tenant_id=$(tenant-id)" -var "ssh_public_key=$(publickey.secureFilePath)"'
