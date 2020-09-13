@@ -34,6 +34,8 @@
             az keyvault secret set --vault-name $VAULT_NAME --name "client-id" --value "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
             az keyvault secret set --vault-name $VAULT_NAME --name "tenant-id" --value "xxxxxxxxxxxxxxxxxxxxxxxxx"
+
+            az keyvault secret set --vault-name $VAULT_NAME --name "subscription-id" --value "xxxxxxxxxxxxxxxxxxxxxxxxxx"
             
             echo "#################### Allow SPN to access key vault ##################"
             #Allow SPN to access key vault
