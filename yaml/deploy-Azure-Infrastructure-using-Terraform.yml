@@ -73,4 +73,4 @@ stages:
       #     command: 'destroy'
       #     workingDirectory: '$(System.DefaultWorkingDirectory)/kubernetes'
       #     environmentServiceName: 'azure-service-connection'
-      #     commandOptions: '-var "client_id=$(client-id)" -var "client_secret=$(client-secret)" -var "subscription-id=$(subscription-id)"  -var "tenant_id=$(tenant-id)" -var "ssh_public_key=$(publickey.secureFilePath)"'
+      #     commandOptions: '-var "client_id=$(client-id)" -var "client_secret=$(client-secret)" -var "subscription_id=$(subscription-id)"  -var "tenant_id=$(tenant-id)" -var "ssh_public_key=$(publickey.secureFilePath)"'
